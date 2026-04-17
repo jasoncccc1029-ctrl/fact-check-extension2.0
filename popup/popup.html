@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.62);
+      --subtle: rgba(255,255,255,.42);
+      --border: rgba(255,255,255,.10);
+      --border-strong: rgba(255,255,255,.14);
+      --glass: rgba(14, 16, 22, .52);
+      --glass-strong: rgba(14, 16, 22, .68);
+      --shadow: 0 22px 60px rgba(0,0,0,.55);
+      --shadow-soft: 0 12px 30px rgba(0,0,0,.38);
+      --blue: #0a84ff;
+      --blue-2: #0a84ff;
+      --green: #34c759;
+      --orange: #ff9f0a;
+      --red: #ff453a;
+      /* 內斂危險色：避免紅暈 */
+      --danger: rgba(255, 69, 58, .08);
+      --danger-border: rgba(255, 69, 58, .12);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 380px;
+      min-height: 200px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+        "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      padding: 16px;
+      background:
+        radial-gradient(1100px 520px at 20% -10%, rgba(10, 132, 255, .18), transparent 62%),
+        radial-gradient(820px 520px at 110% 8%, rgba(120, 140, 255, .08), transparent 66%),
+        radial-gradient(820px 520px at 50% 120%, rgba(255,255,255,.04), transparent 64%),
+        linear-gradient(180deg, #0b0c10 0%, #07080b 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      inset: -30px;
+      background:
+        radial-gradient(700px 260px at 30% 10%, rgba(255,255,255,.07), transparent 62%),
+        radial-gradient(900px 360px at 85% 40%, rgba(255,255,255,.04), transparent 62%),
+        /* subtle grain */
+        repeating-radial-gradient(circle at 0 0, rgba(255,255,255,.035) 0 1px, rgba(255,255,255,0) 1px 4px);
+      pointer-events: none;
+      opacity: .55;
+      filter: blur(.2px);
+    }
+
+    /* iOS-like glass panel wrapper without changing layout */
+    body::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: calc(var(--radius) + 8px);
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(255,255,255,.05);
+      pointer-events: none;
+    }
+
+    a { color: inherit; }
+
+    .glass {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(28px) saturate(195%);
+      -webkit-backdrop-filter: blur(28px) saturate(195%);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .header h2 { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.96); letter-spacing: .2px; }
+    .badge {
+      font-size: 10px;
+      background: linear-gradient(180deg, rgba(12, 22, 40, .72), rgba(8, 14, 28, .55));
+      color: rgba(255,255,255,.92);
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(90, 160, 255, .18);
+      backdrop-filter: blur(22px) saturate(185%);
+      -webkit-backdrop-filter: blur(22px) saturate(185%);
+    }
+    #query {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      border-left: 3px solid rgba(255,255,255,.18);
+      padding-left: 8px;
+    }
+    #score-box {
+      padding: 12px 14px;
+      background: rgba(16, 18, 22, .56);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      font-size: 13px;
+      border: 1px solid var(--border-strong);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(26px) saturate(198%);
+      -webkit-backdrop-filter: blur(26px) saturate(198%);
+      transition: background .18s ease, border-color .18s ease, transform .08s ease;
+    }
+    #score-box:hover {
+      background: rgba(16, 18, 22, .60);
+      border-color: rgba(255,255,255,.18);
+    }
+    .score-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .score-bar-bg {
+      background: rgba(255,255,255,.10);
+      border-radius: 999px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .score-bar {
+      height: 6px;
+      border-radius: 999px;
+      transition: width 0.6s ease;
+    }
+    #count-box {
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+      margin-bottom: 10px;
+      padding: 9px 12px;
+      background: rgba(255,255,255,.04);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
+      transition: background .18s ease, border-color .18s ease, transform .08s ease;
+    }
+    #count-box:hover {
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.16);
+    }
+    #sort-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .sort-btn {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.78);
+      font-size: 11px;
+      cursor: pointer;
+      backdrop-filter: blur(20px) saturate(185%);
+      -webkit-backdrop-filter: blur(20px) saturate(185%);
+      transition: background .18s ease, border-color .18s ease, color .18s ease;
+    }
+    .sort-btn:hover {
+      background: rgba(255,255,255,.07);
+      border-color: rgba(255,255,255,.16);
+    }
+    .sort-btn.active {
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.22);
+      color: rgba(255,255,255,.96);
+    }
+    #loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 2px 0 10px;
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.18);
+      border-top-color: rgba(255,255,255,.70);
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .claim-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255,255,255,.92);
+      margin-bottom: 6px;
+      display: -webkit-box;
+      line-clamp: 2;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .claim-claimtext {
+      font-size: 12px;
+      color: rgba(255,255,255,.72);
+      line-height: 1.45;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      line-clamp: 3;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .alert-tag {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: rgba(255,255,255,.82);
+      margin-bottom: 8px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: background .18s ease, border-color .18s ease;
+    }
+    .alert-tag:hover {
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.16);
+    }
+    #too-long {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+      margin-bottom: 12px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: background .18s ease, border-color .18s ease;
+    }
+    #too-long:hover {
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.16);
+    }
+    #tips-box {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,.80);
+      margin-top: 8px;
+      line-height: 1.7;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: background .18s ease, border-color .18s ease;
+    }
+    #tips-box:hover {
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.16);
+    }
+    #external-search {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    #external-search .label {
+      font-size: 11px;
+      color: rgba(255,255,255,.58);
+      margin-bottom: 8px;
+    }
+    #external-search .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    #external-search .links a {
+      font-size: 11px;
+      color: rgba(190, 222, 255, .95);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+    }
+    #external-search .links a:hover {
+      border-color: rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+    }
+    #no-result {
+      text-align: center;
+      padding: 24px 0 8px;
+      color: rgba(255,255,255,.35);
+      font-size: 13px;
+    }
+    #no-result .icon { font-size: 32px; margin-bottom: 10px; filter: saturate(.9) brightness(.95); }
+    #no-result .no-result-text { color: rgba(255,255,255,.45); font-size: 13px; }
+    /* 卡片淡入動畫 */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .claim-card {
+      background: rgba(18, 22, 32, .58);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s, transform .15s ease, background .2s ease;
+      animation: fadeInUp 0.3s ease forwards;
+      opacity: 0;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+    }
+    .claim-card:hover {
+      border-color: rgba(10, 132, 255, .35);
+      background: rgba(18, 22, 32, .66);
+      transform: translateY(-1px);
+    }
+    .claim-text {
+      font-size: 13px;
+      color: rgba(255,255,255,.86);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    .claim-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .rating {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .rating.false   { background: rgba(255, 255, 255, .06); color: rgba(255, 240, 240, .86); border-color: rgba(255, 255, 255, .12); }
+    .rating.true    { background: rgba(52, 199, 89, .14); color: rgba(211, 255, 224, .98); border-color: rgba(52, 199, 89, .20); }
+    .rating.missing { background: rgba(255, 159, 10, .16); color: rgba(255, 235, 204, .98); border-color: rgba(255, 159, 10, .22); }
+    .rating.other   { background: rgba(255,255,255,.08); color: rgba(255,255,255,.74); border-color: rgba(255,255,255,.12); }
+    .source a { font-size: 11px; color: rgba(150, 205, 255, .95); text-decoration: none; }
+    .source a:hover { text-decoration: underline; }
+    .date { font-size: 10px; color: rgba(255,255,255,.42); margin-top: 2px; }
+    .share-btn {
+      width: 100%;
+      padding: 7px 10px;
+      background: rgba(255,255,255,.06);
+      color: rgba(190, 222, 255, .95);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: background 0.2s, border-color .2s, transform .08s ease;
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+    }
+    .share-btn:hover { background: rgba(255,255,255,.08); border-color: rgba(10, 132, 255, .22); }
+    .share-btn:active { transform: translateY(1px); }
+    #report-btn {
+      margin-top: 14px;
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      box-shadow: 0 14px 34px rgba(0,0,0,.38);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      transition: opacity 0.2s, transform .08s ease;
+    }
+    #report-btn:hover { opacity: 0.92; }
+    #report-btn:active { transform: translateY(1px); }
+    #history-section {
+      margin-top: 16px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      padding-top: 12px;
+    }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .history-label { font-size: 11px; color: rgba(255,255,255,.45); }
+    #clear-history {
+      font-size: 10px;
+      color: rgba(255,255,255,.55);
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 10px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: background .2s, border-color .2s, color .2s;
+    }
+    #clear-history:hover { color: rgba(255,255,255,.88); border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.07); }
+    .history-item {
+      font-size: 11px;
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background 0.2s, border-color .2s;
+    }
+    .history-item:hover { background: rgba(255,255,255,.05); }
+    .history-query { color: rgba(255,255,255,.70); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-time { font-size: 10px; color: rgba(255,255,255,.40); }
+
+    #ai-settings-wrap {
+      margin: 0 0 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+    #ai-settings-wrap summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,.82);
+      user-select: none;
+    }
+    #ai-settings-wrap summary::-webkit-details-marker { display: none; }
+    #ai-settings-wrap summary::after {
+      content: "▸";
+      float: right;
+      color: rgba(255,255,255,.45);
+      font-size: 10px;
+    }
+    #ai-settings-wrap[open] summary::after { content: "▾"; }
+    .ai-settings-inner {
+      padding: 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ai-settings-inner label {
+      font-size: 10px;
+      color: rgba(255,255,255,.52);
+    }
+    .ai-settings-inner input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+      color: rgba(255,255,255,.88);
+      font-size: 12px;
+    }
+    .ai-settings-inner input::placeholder { color: rgba(255,255,255,.35); }
+    .ai-settings-inner .ai-settings-btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .ai-settings-inner .ai-settings-btns button {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.88);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .ai-settings-inner .ai-settings-btns button:hover {
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.18);
+    }
+    #gemini-clear-btn {
+      flex: 0 0 auto !important;
+      min-width: 72px;
+    }
+    .gemini-hint {
+      font-size: 10px;
+      line-height: 1.5;
+      color: rgba(255,255,255,.45);
+    }
+    .gemini-hint a {
+      color: rgba(150, 205, 255, .92);
+      text-decoration: none;
+    }
+    .gemini-hint a:hover { text-decoration: underline; }
+    .gemini-status {
+      font-size: 11px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.04);
+    }
+    .fca-skip-gemini-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 6px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
+    }
+    .fca-skip-gemini-row input {
+      width: auto !important;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+    .fca-skip-gemini-row label {
+      font-size: 11px;
+      line-height: 1.45;
+      color: rgba(255,255,255,.68);
+      cursor: pointer;
+    }
+    #fca-media-tools-wrap { margin-top: 10px; }
+    .fca-media-tools-inner {
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+    }
+    .fca-media-tools-inner label.kw-lab {
+      display: block;
+      font-size: 11px;
+      color: rgba(255,255,255,.72);
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+    .fca-media-tools-inner textarea.kw-ta {
+      width: 100%;
+      min-height: 52px;
+      max-height: 120px;
+      font-size: 11px;
+      line-height: 1.4;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(16,18,22,.75);
+      color: rgba(255,255,255,.9);
+      resize: vertical;
+      font-family: inherit;
+    }
+    .fca-export-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .fca-export-row input[type="number"] {
+      width: 88px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(16,18,22,.75);
+      color: rgba(255,255,255,.9);
+      font-size: 11px;
+    }
+    .fca-export-row button {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(90,160,255,.2);
+      background: rgba(10,132,255,.22);
+      color: rgba(255,255,255,.95);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .fca-export-row button.secondary {
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.12);
+    }
+    .fca-kw-btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .fca-kw-btns button {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.88);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    #fca-privacy-wrap,
+    #fca-index-api-wrap,
+    #fca-downrank-wrap {
+      margin: 0 0 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.11);
+      background: rgba(255,255,255,.035);
+      backdrop-filter: blur(22px) saturate(190%);
+      -webkit-backdrop-filter: blur(22px) saturate(190%);
+      overflow: hidden;
+    }
+    #fca-privacy-wrap summary,
+    #fca-index-api-wrap summary,
+    #fca-downrank-wrap summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,.84);
+      user-select: none;
+    }
+    #fca-privacy-wrap summary::-webkit-details-marker,
+    #fca-index-api-wrap summary::-webkit-details-marker,
+    #fca-downrank-wrap summary::-webkit-details-marker { display: none; }
+    #fca-privacy-wrap summary::after,
+    #fca-index-api-wrap summary::after,
+    #fca-downrank-wrap summary::after {
+      content: "▸";
+      float: right;
+      color: rgba(255,255,255,.45);
+      font-size: 10px;
+    }
+    #fca-privacy-wrap[open] summary::after,
+    #fca-index-api-wrap[open] summary::after,
+    #fca-downrank-wrap[open] summary::after { content: "▾"; }
+    .fca-privacy-inner,
+    .fca-downrank-inner {
+      padding: 0 12px 12px;
+      font-size: 11px;
+      line-height: 1.65;
+      color: rgba(255,255,255,.68);
+    }
+    #fca-news-downrank-ta {
+      width: 100%;
+      min-height: 72px;
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(12,14,20,.55);
+      color: rgba(255,255,255,.9);
+      font-size: 11px;
+      font-family: inherit;
+      resize: vertical;
+      backdrop-filter: blur(16px) saturate(170%);
+      -webkit-backdrop-filter: blur(16px) saturate(170%);
+    }
+    #fca-downrank-save {
+      margin-top: 8px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(90,160,255,.22);
+      background: rgba(10,132,255,.2);
+      color: rgba(255,255,255,.95);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #fca-downrank-save:hover {
+      background: rgba(10,132,255,.28);
+    }
+    #fca-downrank-status {
+      margin-top: 8px;
+      font-size: 10px;
+      color: rgba(255,255,255,.5);
+    }
+    /* ── 免責聲明按鈕 ── */
+    #fca-disclaimer-btn {
+      display: block;
+      width: 100%;
+      margin-top: 14px;
+      padding: 9px 0;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.50);
+      font-size: 11px;
+      cursor: pointer;
+      letter-spacing: .02em;
+    }
+    #fca-disclaimer-btn:hover {
+      background: rgba(255,255,255,.07);
+      color: rgba(255,255,255,.70);
+      border-color: rgba(255,255,255,.16);
+    }
+    /* ── Modal overlay ── */
+    #fca-disclaimer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    #fca-disclaimer-overlay.open { display: flex; }
+    #fca-disclaimer-modal {
+      width: 340px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #13151c;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 22px 20px 18px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.7);
+      color: rgba(255,255,255,.88);
+    }
+    #fca-disclaimer-modal h2 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      letter-spacing: .02em;
+    }
+    #fca-disclaimer-modal h3 {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,.55);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin: 14px 0 6px;
+    }
+    #fca-disclaimer-modal p,
+    #fca-disclaimer-modal li {
+      font-size: 12px;
+      line-height: 1.7;
+      color: rgba(255,255,255,.75);
+    }
+    #fca-disclaimer-modal ul { padding-left: 16px; }
+    #fca-disclaimer-modal li { margin-bottom: 4px; }
+    #fca-disclaimer-modal a {
+      color: #0a84ff;
+      text-decoration: none;
+    }
+    #fca-disclaimer-modal a:hover { text-decoration: underline; }
+    #fca-disclaimer-close {
+      display: block;
+      width: 100%;
+      margin-top: 18px;
+      padding: 10px 0;
+      border-radius: 10px;
+      border: none;
+      background: rgba(10,132,255,.18);
+      color: #0a84ff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #fca-disclaimer-close:hover { background: rgba(10,132,255,.28); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>事實查核結果</h2>
+    <span class="badge">Beta</span>
+  </div>
+  <p style="font-size:11px;line-height:1.5;color:rgba(255,255,255,.55);margin:-4px 0 12px;">
+    反白可連到 Cofacts／國際查核索引；頁內面板並附<strong>網域分析</strong>（規則分型，可選 Gemini 輔助判讀）。僅供參考，請交叉查證。
+  </p>
+  <div id="query"></div>
+  <details id="fca-media-tools-wrap">
+    <summary>整頁報告與關鍵字附加</summary>
+    <div class="fca-media-tools-inner">
+      <p class="gemini-hint" style="margin-bottom:8px;">附加關鍵字與內建詞庫<strong>合併</strong>（您的詞優先）；供內部議題掃描與匯出備查。匯出 Markdown 目前<strong>僅含網域分析＋正文摘錄</strong>。</p>
+      <label class="kw-lab" for="fca-kw-china">中國用語／語彙（每行一詞）</label>
+      <textarea id="fca-kw-china" class="kw-ta" autocomplete="off"></textarea>
+      <label class="kw-lab" for="fca-kw-us">疑美／對美論述</label>
+      <textarea id="fca-kw-us" class="kw-ta" autocomplete="off"></textarea>
+      <label class="kw-lab" for="fca-kw-def">國防安全</label>
+      <textarea id="fca-kw-def" class="kw-ta" autocomplete="off"></textarea>
+      <label class="kw-lab" for="fca-kw-health">公共衛生</label>
+      <textarea id="fca-kw-health" class="kw-ta" autocomplete="off"></textarea>
+      <label class="kw-lab" for="fca-kw-econ">經貿財經</label>
+      <textarea id="fca-kw-econ" class="kw-ta" autocomplete="off"></textarea>
+      <div class="fca-kw-btns">
+        <button type="button" id="fca-kw-save-btn">儲存附加關鍵字</button>
+        <button type="button" id="fca-kw-reset-btn">還原為僅用內建詞</button>
+      </div>
+      <p id="fca-kw-status" class="gemini-status" hidden style="margin-top:8px;"></p>
+      <div class="fca-export-row">
+        <label for="fca-export-max-chars" style="font-size:11px;color:rgba(255,255,255,.6);">匯出摘錄字數上限</label>
+        <input type="number" id="fca-export-max-chars" min="4000" max="80000" value="16000" />
+        <button type="button" id="fca-export-page-btn">匯出此分頁為 Markdown</button>
+      </div>
+      <p class="gemini-hint" style="margin-top:8px;margin-bottom:0;">匯出會在「目前聚焦的瀏覽器分頁」下載 .md 檔（含網域分型、關鍵字掃描與正文摘錄）。請在可注入腳本的一般網頁使用，並先重新整理頁面若剛更新擴充功能。</p>
+    </div>
+  </details>
+  <details id="fca-privacy-wrap">
+    <summary>隱私與資料傳輸</summary>
+    <div class="fca-privacy-inner">
+      <p>查核與新聞摘要會向擴充功能提供的 API（含國際查核索引）與 Google 新聞 RSS 請求資料；可選的 Gemini 金鑰僅存於本機並直接向 Google 傳送。我們無法代表第三方服務保證其隱私政策，請自行斟酌是否使用 AI 與是否於敏感場景反白查核。</p>
+      <div class="fca-skip-gemini-row" style="margin-top:8px;">
+        <input type="checkbox" id="fca-show-news-toggle" />
+        <label for="fca-show-news-toggle">在側欄顯示「即時新聞（可信來源）」區塊</label>
+      </div>
+      <div class="ai-settings-btns" style="margin-top:8px;">
+        <button type="button" id="fca-reset-gemini-privacy">重設 Gemini 隱私提醒</button>
+      </div>
+      <p id="fca-privacy-status" class="gemini-status" hidden></p>
+    </div>
+  </details>
+  <details id="fca-index-api-wrap">
+    <summary>查核索引 API（進階）</summary>
+    <div class="fca-privacy-inner">
+      <p style="margin:0 0 8px;"><strong>目前為受信任使用者模式：</strong>請向管理者索取「索引 API 權杖」，貼上後按儲存；與 Vercel 環境變數 <code style="font-size:10px;opacity:.9;">FCA_SEARCH_TOKEN</code> 須一致，國際查核索引才會查詢。未設定時不會呼叫索引 API（Cofacts 等仍可依設定使用）。若將來要公開給所有人，請在 <code style="font-size:10px;opacity:.9;">background.js</code> 將 <code style="font-size:10px;opacity:.9;">FCA_INDEX_TRUSTED_ONLY</code> 改為 <code style="font-size:10px;opacity:.9;">false</code> 並依教學設定匿名限流。</p>
+      <label for="fca-index-api-token" style="display:block;font-size:10px;color:rgba(255,255,255,.52);margin-bottom:4px;">存取權杖（選填）</label>
+      <input type="password" id="fca-index-api-token" autocomplete="off" spellcheck="false" placeholder="未設定則僅送匿名層級請求" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(12,14,20,.55);color:rgba(255,255,255,.88);font-size:12px;box-sizing:border-box;" />
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button type="button" id="fca-index-api-save" style="flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.88);font-size:11px;font-weight:600;cursor:pointer;">儲存權杖</button>
+        <button type="button" id="fca-index-api-clear" style="flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.88);font-size:11px;font-weight:600;cursor:pointer;">清除權杖</button>
+      </div>
+      <p id="fca-index-api-status" class="gemini-status" hidden style="margin-top:8px;"></p>
+    </div>
+  </details>
+  <details id="fca-downrank-wrap">
+    <summary>即時新聞來源降權</summary>
+    <div class="fca-downrank-inner">
+      <p>每行一個網域（不含路徑），例如 <code style="font-size:10px;opacity:.85;">example.com</code>。符合的來源在「可信即時新聞」排序會被降權；僅影響本功能顯示順序。</p>
+      <textarea id="fca-news-downrank-ta" autocomplete="off" spellcheck="false" placeholder="每行一個網域…"></textarea>
+      <button type="button" id="fca-downrank-save">儲存降權清單</button>
+      <div id="fca-downrank-status"></div>
+    </div>
+  </details>
+  <details id="ai-settings-wrap">
+    <summary>AI 二次判讀（Gemini，選填）</summary>
+    <div class="ai-settings-inner">
+      <label for="gfc-key-input">Google Fact Check API Key（僅存於本機）</label>
+      <input type="password" id="gfc-key-input" autocomplete="off" spellcheck="false" placeholder="貼上 Google Fact Check API Key…" />
+      <div class="ai-settings-btns">
+        <button type="button" id="gfc-save-btn">儲存 GFC Key</button>
+        <button type="button" id="gfc-clear-btn">清除 GFC Key</button>
+      </div>
+      <div id="gfc-status" class="gemini-status" hidden></div>
+      <label for="gemini-key-input">API 金鑰（僅存於本機）</label>
+      <input type="password" id="gemini-key-input" autocomplete="off" spellcheck="false" placeholder="貼上 Google AI Studio 金鑰…" />
+      <label for="gemini-model-input">模型 ID（選填）</label>
+      <input type="text" id="gemini-model-input" autocomplete="off" spellcheck="false" placeholder="預設 gemini-2.0-flash" />
+      <div class="ai-settings-btns">
+        <button type="button" id="gemini-save-btn">儲存</button>
+        <button type="button" id="gemini-clear-btn">清除金鑰</button>
+      </div>
+      <p class="gemini-hint">取得金鑰：<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>。未設定時仍可使用 Cofacts，但不會呼叫 Gemini。</p>
+      <div class="fca-skip-gemini-row">
+        <input type="checkbox" id="fca-skip-gemini" />
+        <label for="fca-skip-gemini">完全不要呼叫 Gemini（僅用 Cofacts／國際索引；反白分段顏色也<strong>只依資料庫</strong>比對）</label>
+      </div>
+      <div id="gemini-status" class="gemini-status" hidden></div>
+      <div id="gemini-cooldown-bar" style="margin-top:8px;padding:7px 10px;border-radius:6px;background:#fff3cd;color:#856404;font-size:12px;display:none;">
+        ⏳ <span id="gemini-cooldown-msg">Gemini 冷卻中</span>
+        <button type="button" id="gemini-cooldown-clear-btn"
+          style="margin-left:10px;font-size:11px;padding:2px 8px;cursor:pointer;">
+          強制清除冷卻
+        </button>
+      </div>
+    </div>
+  </details>
+  <div id="loading" hidden>
+    <div class="spinner"></div>
+    <div id="loading-text">查詢中…</div>
+  </div>
+  <div id="score-box" hidden></div>
+  <div id="alert-box" hidden style="margin-bottom: 12px;"></div>
+  <div id="too-long" hidden>
+    ⚠️ 文字太長，建議選取 3-8 個關鍵字效果更好
+  </div>
+  <div id="count-box" hidden></div>
+  <div id="sort-controls" hidden>
+    <button id="sort-relevance" class="sort-btn active">相關優先</button>
+    <button id="sort-latest" class="sort-btn">最新優先</button>
+  </div>
+  <div id="results" hidden></div>
+  <div id="no-result" hidden>
+    <div class="icon">—</div>
+    <div class="no-result-text">查無相關查核資料</div>
+    <div id="external-search" hidden>
+      <div class="label">延伸搜尋</div>
+      <div class="links">
+        <a id="cofacts-link" href="#" target="_blank" rel="noopener noreferrer">Cofacts 搜尋</a>
+        <a id="tfc-link" href="#" target="_blank" rel="noopener noreferrer">台灣事實查核中心</a>
+      </div>
+    </div>
+  </div>
+  <div id="tips-box" hidden></div>
+  <button id="report-btn" hidden>回報為可疑線索</button>
+  <div id="history-section" hidden>
+    <div class="history-header">
+      <div class="history-label">最近查詢記錄</div>
+      <button id="clear-history">清除</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <button type="button" id="fca-disclaimer-btn">免責聲明 &amp; 資料來源授權</button>
+
+  <!-- 免責聲明 Modal -->
+  <div id="fca-disclaimer-overlay" role="dialog" aria-modal="true" aria-labelledby="fca-disclaimer-title">
+    <div id="fca-disclaimer-modal">
+      <h2 id="fca-disclaimer-title">⚖️ 免責聲明 &amp; 資料來源授權</h2>
+
+      <h3>工具性質</h3>
+      <p>本工具為個人輔助參考工具，<strong>不構成正式查核結論</strong>。所有判定結果僅供參考，使用者應自行判斷內容真偽，本工具開發者不對任何決策後果負責。</p>
+
+      <h3>資料傳輸說明</h3>
+      <p>您反白的文字將被傳送至以下第三方服務進行查詢：</p>
+      <ul>
+        <li><strong>Cofacts 真的假的</strong>（台灣）— 謠言查核資料庫</li>
+        <li><strong>台灣事實查核中心（TFC）</strong>（台灣）— 新聞查核</li>
+        <li><strong>Google Fact Check Tools API</strong>（美國）— 國際查核索引</li>
+        <li><strong>Google Generative AI（Gemini）</strong>（美國）— AI 輔助判讀（需設定金鑰，可關閉）</li>
+        <li><strong>Google News RSS</strong>（美國）— 即時新聞比對</li>
+      </ul>
+      <p style="margin-top:6px;color:rgba(255,200,100,.85);">⚠️ 使用 Gemini 免費版時，傳送的內容可能依 <a href="https://ai.google.dev/terms" target="_blank" rel="noopener noreferrer">Google AI 服務條款</a> 用於改善模型，如需隱私保障請使用付費版 API。</p>
+
+      <h3>資料授權</h3>
+      <ul>
+        <li><strong>Cofacts 資料</strong>：採 <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh_TW" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a> 授權，引用時保留出處連結。</li>
+        <li><strong>TFC 資料</strong>：著作權屬台灣事實查核中心，本工具僅顯示標題與連結。</li>
+        <li><strong>GFC 資料</strong>：著作權屬各查核機構，本工具依 Google API 服務條款使用。</li>
+        <li><strong>新聞標題</strong>：著作權屬各新聞媒體，本工具僅顯示標題與連結。</li>
+      </ul>
+
+      <h3>AI 判讀限制</h3>
+      <p>Gemini AI 判讀結果為輔助性質，<strong>非正式查核結論</strong>，且受訓練資料時效限制，對近期事件可能有誤判。請以出處連結核對原文。</p>
+
+      <h3>版本</h3>
+      <p style="color:rgba(255,255,255,.4);font-size:11px;">事實查核助手 v2.3.73 ・ 開發者自用研究工具</p>
+
+      <button type="button" id="fca-disclaimer-close">我已了解，關閉</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

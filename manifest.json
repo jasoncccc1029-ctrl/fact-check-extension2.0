@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "事實查核助手",
+  "version": "2.3.73",
+  "description": "選字查核；頁內網域分析、Cofacts／國際索引與可選 Gemini 二次判讀",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "activeTab",
+    "scripting",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://fact-check-extension.vercel.app/*",
+    "https://api.cofacts.tw/*",
+    "https://tfc-taiwan.org.tw/*",
+    "https://factchecktools.googleapis.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://news.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "commands": {
+    "factcheck-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F"
+      },
+      "description": "查核選取的文字"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/fca-loading-turtle.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
